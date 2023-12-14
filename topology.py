@@ -12,7 +12,7 @@ class PropagationDirection(Enum):
     DOWN = 1
     PEER = 2
 
-def build_topology(textIO: TextIO) -> nx.DiGraph:
+def build_topology(textIO: TextIO) -> nx.MultiDiGraph:
     topo = nx.MultiDiGraph()
     for i, line in enumerate(textIO):
         if line[0] == "#":
@@ -36,7 +36,7 @@ def build_topology(textIO: TextIO) -> nx.DiGraph:
 
 # Based on https://github.com/bgpkit/valley-free/blob/494291624e1af5bc9358e03afc28cf40cb70a9ee/src/lib.rs#L207
 def propagate_paths(
-        topo: nx.DiGraph, 
+        topo: nx.MultiDiGraph, 
         origin: int,
         direction: PropagationDirection = PropagationDirection.UP,
         _path: tuple[int] = (),
@@ -61,6 +61,7 @@ def propagate_paths(
     match direction:
         case PropagationDirection.UP:
             for asn1, asn2, data in connections:
+                print("CONNECTION", asn1, asn2, data)
                 assert asn1 == origin # sanity check
                 relationship = data["relationship"]
                 match relationship:
@@ -75,6 +76,7 @@ def propagate_paths(
                             )
                         )
                     case ASRelationship.PEER:
+                        print("PEER", asn2)
                         destinations.extend(
                             propagate_paths(
                                 topo,
