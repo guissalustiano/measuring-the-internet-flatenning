@@ -55,7 +55,7 @@ TIER2 = set([
     6663,
 ])
 
-def hierachi_free(topo, asn):
+def hierarchy_free(topo, asn):
     paths = propagate_paths(topo, asn)
     tier1 = TIER1 - set([asn])
     tier2 = TIER2 - set([asn])
