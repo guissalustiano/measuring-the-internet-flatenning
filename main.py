@@ -55,39 +55,39 @@ TIER2 = set([
     6663,
 ])
 
-def hierarchy_free(topo, asn):
+CLOUD_PROVIDERS = set([
+    19604,
+    15169,
+])
+
+def calc_hierarchy_free(topo, asn):
+    assert(isinstance(asn, int))
+
     paths = propagate_paths(topo, asn)
+    provider = set(topo.ases_map[asn].providers) - set([asn])
     tier1 = TIER1 - set([asn])
     tier2 = TIER2 - set([asn])
 
-    provider_free = set()
-    tier1_free = set()
     hierarchy_free = set()
     for path in paths:
-        print(path)
-        if path[-1] in provider_free:
-            print("Skipping because provider free")
-            continue
-
-        if any(pr_as in path for pr_as in topo.ases_map[asn].providers):
-            continue
-        provider_free.add(path[-1])
-
         if any(t1_as in path for t1_as in tier1):
+            # print("Skipping because tier1 in path")
             continue
-        tier1_free.add(path[-1])
 
         if any(t2_as in path for t2_as in tier2):
+            # print("Skipping because tier2 in path")
             continue
+        assert(isinstance(path[-1], int))
         hierarchy_free.add(path[-1])
 
-    return hierarchy_free, tier1_free, provider_free
+    return hierarchy_free
 
 if __name__ == "__main__":
-    topo = load_topology("20161101.as-rel.txt.bz2")
-    ibm_asn = 19604
-    hierarchy_free, tier1_free, provider_free = hierachi_free(topo, ibm_asn)
-    print(f"IBM AS Number: {ibm_asn}")
-    print(f"Hierarchy Free: {hierarchy_free}")
-    print(f"Tier1 Free: {tier1_free}")
-    print(f"Provider Free: {provider_free}")
+    topo = load_topology("20231201.as-rel.txt.bz2")
+
+    ibm_asn = 36351 # IBM Cloud
+    google_asn = 15169
+    
+    #asns = set(p[-1] for p in propagate_paths(topo, ibm_asn))
+    hierarchy_free = calc_hierarchy_free(topo, ibm_asn)
+    print(f"{ibm_asn}: {len(hierarchy_free)}/{len(topo.ases_map.keys())}")
