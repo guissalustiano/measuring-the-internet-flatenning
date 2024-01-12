@@ -1,4 +1,5 @@
 from valley_free import load_topology, propagate_paths
+import pandas as pd
 
 # From https://en.wikipedia.org/wiki/Tier_1_network#List_of_Tier_1_networks
 TIER1 = set([
@@ -56,8 +57,12 @@ TIER2 = set([
 ])
 
 CLOUD_PROVIDERS = set([
-    19604,
-    15169,
+    36351, # IBM
+    19604, # IBM Cloud
+    15169, # Google
+    8075, # Microsoft (Not azure)
+    12076, # Microsoft (Azure)
+    16509, # Amazon Cloud
 ])
 
 def calc_hierarchy_free(topo, asn):
@@ -77,6 +82,7 @@ def calc_hierarchy_free(topo, asn):
         if any(t2_as in path for t2_as in tier2):
             # print("Skipping because tier2 in path")
             continue
+
         assert(isinstance(path[-1], int))
         hierarchy_free.add(path[-1])
 
@@ -85,9 +91,17 @@ def calc_hierarchy_free(topo, asn):
 if __name__ == "__main__":
     topo = load_topology("20231201.as-rel.txt.bz2")
 
-    ibm_asn = 36351 # IBM Cloud
-    google_asn = 15169
-    
-    #asns = set(p[-1] for p in propagate_paths(topo, ibm_asn))
-    hierarchy_free = calc_hierarchy_free(topo, ibm_asn)
-    print(f"{ibm_asn}: {len(hierarchy_free)}/{len(topo.ases_map.keys())}")
+    asns = list(TIER1 | TIER2 | CLOUD_PROVIDERS)
+    df = pd.DataFrame(data = {
+        "asn": asns,
+        "hierarchy_free": [len(calc_hierarchy_free(topo, asn)) for asn in asns],
+    })
+
+    print(df.head())
+    print(df.info())
+    print(df.describe())
+
+    df.to_csv("hierarchy_free.csv", index=False)
+
+
+
